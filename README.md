@@ -453,7 +453,12 @@ end run
 python3 -m inftime.cli auto-calendar                  # 把没写进日历的事件全写进去
 python3 -m inftime.cli auto-calendar --newer-than 70  # 只处理最近 70 分钟的（给轮询用）
 python3 -m inftime.cli auto-calendar --calendar 个人   # 指定日历（默认「个人」）
+python3 -m inftime.cli auto-calendar --force-old      # 连同已过期的事件一起推（补录）
 ```
+
+**过期宽限（默认 24 小时）**：开始时间早于 24 小时前的事件默认**不推** ——
+日程都结束了，写进日历只是污染。关机补跑最多隔夜，宽限足够；确认还要推更早的，
+加 `--force-old`（跳过会打印说明了跳的是谁，不会静默）。
 
 第一次运行 macOS 会弹一次「"快捷指令"想要访问你的日历」→ 允许，之后全自动。
 

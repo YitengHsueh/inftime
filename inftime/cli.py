@@ -556,6 +556,23 @@ def cmd_auto_calendar(a: argparse.Namespace) -> int:
             evs = [e for e in evs
                    if (e.updated_at or "") >= cut.isoformat(timespec="seconds")]
 
+        # 过期宽限：开始时间早于 N 小时前的事件不进日历（2026-10-21 加：
+        # 实测库里躺着一条过期 33h 的「年级大会」，无脑推只会污染日历）。
+        # 关机补跑场景最多隔夜，24h 足够；更早的说明这条日程已经结束了。
+        # ⚠️ 跳过必须打印 —— 「什么都没发生」最难排查（坑 17）。
+        if not a.force_old and evs:
+            from datetime import datetime, timedelta
+            cutoff = datetime.now().astimezone() - timedelta(hours=a.skip_older_than)
+            fresh, stale = [], []
+            for e in evs:
+                s = e.effective_start_dt
+                (stale if (s and s < cutoff) else fresh).append(e)
+            evs = fresh
+            if stale:
+                names = "、".join(f"「{e.title}」（{e.when_label()}）" for e in stale)
+                print(f"⏭ 跳过 {len(stale)} 条开始时间早于 {a.skip_older_than} 小时前的事件：{names}")
+                print("   （确认还要推就加 --force-old）")
+
         if not evs:
             print("没有要写进日历的事件（都已写过，或库里没有可行动的事件）。")
             return 0
@@ -678,6 +695,11 @@ def build_parser() -> argparse.ArgumentParser:
     ac.add_argument("--alarm", type=int, default=15, help="提前多少分钟提醒（默认 15）")
     ac.add_argument("--newer-than", type=int, default=None, metavar="分钟",
                     help="只处理最近 N 分钟内更新过的事件（给轮询用）")
+    ac.add_argument("--skip-older-than", type=int, default=24, metavar="小时",
+                    help="跳过开始时间早于 N 小时前的事件（默认 24，防把过期日程"
+                         "写进日历；补跑场景可用 --force-old 覆盖）")
+    ac.add_argument("--force-old", action="store_true",
+                    help="连同已过期的事件一起推（调试/补录用）")
     ac.add_argument("--all", action="store_true",
                     help="连同已推送过的一起重推（⚠️ 会在日历里产生重复）")
     ac.set_defaults(func=cmd_auto_calendar)

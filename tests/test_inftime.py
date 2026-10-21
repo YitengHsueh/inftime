@@ -829,7 +829,11 @@ class TestWeComBridge(unittest.TestCase):
         # 把退化结果写死进断言，等于把 bug 固化成契约。
         ev = events[0]
         self.assertGreaterEqual(len(ev.title), 2)
-        self.assertEqual(ev.start[:16], "2026-10-16T14:00")
+        # 「本周五」以周一为锚，相对**系统当前时间**解析（render 的行为）。
+        # 必须动态算 —— 写死绝对日期的测试一过周五就红（2026-10-21 踩中）。
+        from datetime import datetime, timedelta
+        friday = datetime.now() + timedelta(days=4 - datetime.now().weekday())
+        self.assertEqual(ev.start[:16], friday.strftime("%Y-%m-%dT14:00"))
         self.assertEqual(ev.source_channel, "wecom")
 
     def test_render_skips_empty_preview(self):
@@ -1221,7 +1225,8 @@ class TestCalendarShortcut(unittest.TestCase):
                  redirect_stdout(buf):
                 rc = cli.cmd_auto_calendar(argparse.Namespace(
                     shortcut="Inftime记日程", calendar="个人",
-                    alarm=15, newer_than=None, all=False))
+                    alarm=15, newer_than=None, all=False,
+                    skip_older_than=24, force_old=False))
             self.assertEqual(rc, 0)
             self.assertEqual(called, [], "已推过的不该再推，否则日历堆重复")
             self.assertIn("没有要写进日历", buf.getvalue())
@@ -1253,7 +1258,8 @@ class TestCalendarShortcut(unittest.TestCase):
                  redirect_stdout(buf):
                 rc = cli.cmd_auto_calendar(argparse.Namespace(
                     shortcut="Inftime记日程", calendar="个人",
-                    alarm=15, newer_than=None, all=False))
+                    alarm=15, newer_than=None, all=False,
+                    skip_older_than=24, force_old=False))
             self.assertEqual(rc, 3, "有失败就不能装作全部成功")
             # cmd_auto_calendar 结束时会关连接，断言前重新开一个
             check = Store(Path(d) / "t.db")
@@ -1263,6 +1269,105 @@ class TestCalendarShortcut(unittest.TestCase):
             check.close()
             store.close()
 
+
+    def test_auto_calendar_skips_stale_events(self):
+        """过期宽限（2026-10-21 实测驱动）：开始时间早于 N 小时前的事件
+        不许进日历 —— 实测库里躺着过期 33h 的「年级大会」，无脑推只会污染。
+        跳过必须打印（坑 17：「什么都没发生」最难排查）。"""
+        import argparse
+        from contextlib import redirect_stdout
+        import io
+        from unittest import mock
+
+        from inftime import cli
+        from inftime import calendar_shortcut as cs
+
+        with tempfile.TemporaryDirectory() as d:
+            store = Store(Path(d) / "t.db")
+            stale = self._event(title="年级大会", raw_text="过期的那条",
+                                start="2026-10-20T09:30:00+08:00")
+            store.add(stale)
+
+            called: list = []
+            buf = io.StringIO()
+            with mock.patch.object(cli, "_store", lambda: store), \
+                 mock.patch.object(cs, "shortcut_exists", lambda name: True), \
+                 mock.patch.object(cs, "push_via_shortcut",
+                                   lambda evs, **k: called.append(list(evs))), \
+                 redirect_stdout(buf):
+                rc = cli.cmd_auto_calendar(argparse.Namespace(
+                    shortcut="Inftime记日程", calendar="个人",
+                    alarm=15, newer_than=None, all=False,
+                    skip_older_than=24, force_old=False))
+            out = buf.getvalue()
+            self.assertEqual(rc, 0)
+            self.assertEqual(called, [], "过期事件推了就是日历污染")
+            self.assertIn("跳过", out)
+            self.assertIn("年级大会", out, "跳过也要说清跳的是谁")
+            store.close()
+
+    def test_auto_calendar_force_old_pushes_stale(self):
+        """--force-old：补录场景（关机几天后回来）要能强行推过期事件。"""
+        import argparse
+        from contextlib import redirect_stdout
+        import io
+        from unittest import mock
+
+        from inftime import cli
+        from inftime import calendar_shortcut as cs
+
+        with tempfile.TemporaryDirectory() as d:
+            store = Store(Path(d) / "t.db")
+            stale = self._event(title="年级大会", raw_text="过期的那条",
+                                start="2026-10-20T09:30:00+08:00")
+            store.add(stale)
+
+            called: list = []
+            with mock.patch.object(cli, "_store", lambda: store), \
+                 mock.patch.object(cs, "shortcut_exists", lambda name: True), \
+                 mock.patch.object(cs, "push_via_shortcut",
+                                   lambda evs, **k: called.append(list(evs)) or []), \
+                 redirect_stdout(io.StringIO()):
+                rc = cli.cmd_auto_calendar(argparse.Namespace(
+                    shortcut="Inftime记日程", calendar="个人",
+                    alarm=15, newer_than=None, all=False,
+                    skip_older_than=24, force_old=True))
+            self.assertEqual(rc, 0)
+            self.assertEqual(len(called[0]), 1, "force_old 必须放行过期事件")
+            store.close()
+
+    def test_auto_calendar_grace_window_keeps_recent(self):
+        """宽限内的近期事件照常推 —— 过期过滤不能误伤「今早刚过的会」。"""
+        import argparse
+        from contextlib import redirect_stdout
+        import io
+        from unittest import mock
+
+        from inftime import cli
+        from inftime import calendar_shortcut as cs
+
+        with tempfile.TemporaryDirectory() as d:
+            store = Store(Path(d) / "t.db")
+            # 2 小时前开始 —— 在 24h 宽限内
+            from datetime import datetime, timedelta
+            recent = (datetime.now().astimezone() - timedelta(hours=2)).isoformat()
+            ev = self._event(title="今早的站会", raw_text="刚过的那条",
+                             start=recent)
+            store.add(ev)
+
+            called: list = []
+            with mock.patch.object(cli, "_store", lambda: store), \
+                 mock.patch.object(cs, "shortcut_exists", lambda name: True), \
+                 mock.patch.object(cs, "push_via_shortcut",
+                                   lambda evs, **k: called.append(list(evs)) or []), \
+                 redirect_stdout(io.StringIO()):
+                rc = cli.cmd_auto_calendar(argparse.Namespace(
+                    shortcut="Inftime记日程", calendar="个人",
+                    alarm=15, newer_than=None, all=False,
+                    skip_older_than=24, force_old=False))
+            self.assertEqual(rc, 0)
+            self.assertEqual(len(called[0]), 1, "宽限内的近期事件必须照常推")
+            store.close()
 
 
 class TestWeComBridgePush(unittest.TestCase):
