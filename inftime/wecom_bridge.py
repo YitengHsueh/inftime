@@ -286,7 +286,8 @@ def main() -> int:
                          "隐含 --commit —— 没落库的东西推不了。")
     ap.add_argument("--alarm", type=int, default=15,
                     help="日历提醒提前量（分钟），仅 --push 时有效，默认 15")
-    ap.add_argument("--group", default="小泰腾OPC", help="回群的群名")
+    ap.add_argument("--group", default="企微群",
+                    help="回群的群名（默认占位值，实际使用请显式传入你自己的群名）")
     ap.add_argument("--text", default=None,
                     help="离线自测：不走企微，直接把这句文本喂进同一条链路")
     ap.add_argument("--hours", type=float, default=WINDOW_HOURS)

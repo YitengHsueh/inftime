@@ -804,7 +804,7 @@ class TestWeComBridge(unittest.TestCase):
             return 0, "ok", ""
 
         with mock.patch.object(wb, "_run", fake_run):
-            wb.reply_to_group("小泰腾OPC", "已记下：xxx")
+            wb.reply_to_group("项目组", "已记下：xxx")
 
         self.assertIn("--state-file", captured["args"])
         idx = captured["args"].index("--state-file")
@@ -900,9 +900,9 @@ class TestBridgeOutputTellsTheTruth(unittest.TestCase):
         from inftime import wecom_bridge as wb
 
         msgs = [
-            {"chat_name": "小泰腾OPC", "sender": "薛以腾",
+            {"chat_name": "项目组", "sender": "李工",
              "preview": "本周五下午两点前把材料发我", "send_time": "2026-10-10 13:24"},
-            {"chat_name": "小泰腾OPC", "sender": "薛以腾",
+            {"chat_name": "项目组", "sender": "李工",
              "preview": "哈哈今天天气不错", "send_time": "2026-10-10 13:25"},
         ]
 
@@ -936,7 +936,7 @@ class TestBridgeOutputTellsTheTruth(unittest.TestCase):
 
         from inftime import wecom_bridge as wb
 
-        msgs = [{"chat_name": "小泰腾OPC", "sender": "薛以腾",
+        msgs = [{"chat_name": "项目组", "sender": "李工",
                  "preview": "哈哈今天天气不错", "send_time": "2026-10-10 13:25"}]
         sent: list = []
 
