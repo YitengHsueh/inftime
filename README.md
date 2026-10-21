@@ -1,5 +1,11 @@
 # Inftime
 
+![version](https://img.shields.io/badge/version-0.1.0-blue)
+![license](https://img.shields.io/badge/license-MIT-green)
+![python](https://img.shields.io/badge/python-3.9%2B-blue)
+![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
+![platform](https://img.shields.io/badge/core-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
+
 > 把你随手丢过来的任何中文消息，变成你日历里真正会发生的事件。**数据不出你的电脑。**
 
 2018 年，我们几个同济在读的学生写过一份 54 页的商业计划书，想用 NLP 从微信群消息里
@@ -706,3 +712,13 @@ inftime/
 ---
 
 *让每一分钟都拥有永恒的意义。* — 2018 年 BP 结尾原句，留给这个版本。
+
+---
+
+## 参与
+
+发现它把某句话理解错了？卡在某个平台的安装？先看 [CONTRIBUTING.md](CONTRIBUTING.md)
+—— 里面写了欢迎什么、硬约束是什么、以及什么样的 PR 会被拒。
+
+最有用的一种反馈：**一句它没处理好的原话**，加上你期望的结果。
+
