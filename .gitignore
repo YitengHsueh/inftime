@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Inftime 本地数据（永远不该进仓库）
+.inftime/
+*.db
+*.sqlite3
+config.json
+
+# WorkBuddy 工作记忆（含内部调试细节，永不公开）
+.workbuddy/
+
+# 系统垃圾
+.DS_Store
+
+# 编辑器
+.idea/
+.vscode/
+*.swp

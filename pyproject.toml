@@ -1,0 +1,28 @@
+[project]
+name = "inftime"
+version = "0.1.0"
+description = "把散落的中文消息变成你日历里真正会发生的事件。本地优先，零依赖，以 MCP Server 形式被 agent 调用。"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["mcp", "calendar", "nlp", "chinese", "time-management", "local-first"]
+dependencies = []
+
+[project.urls]
+# TODO: 仓库建好后把 YOUR_NAME 换成真实用户名
+Homepage = "https://github.com/YOUR_NAME/inftime"
+
+[project.scripts]
+inftime = "inftime.cli:main"
+inftime-mcp = "inftime.mcp_server:main"
+inftime-watch = "inftime.watch_clipboard:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["inftime"]
+
+[tool.setuptools.package-data]
+inftime = ["../README.md"]

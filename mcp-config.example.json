@@ -1,0 +1,20 @@
+{
+  "_说明": "把 mcpServers 这段粘进你的 MCP 客户端配置。cwd 必须是 inftime 目录的绝对路径，否则找不到包。",
+  "_已安装到": "~/.workbuddy/mcp.json（本机已配好，下面是与之一致的版本）",
+  "_其他客户端": {
+    "Claude_Desktop": "~/Library/Application Support/Claude/claude_desktop_config.json",
+    "Cursor": ".cursor/mcp.json 或 ~/.cursor/mcp.json"
+  },
+  "_注意": "API key 不要写在这里。它存在 ~/.inftime/config.json（权限 600），分享配置时不会连带泄露凭据。",
+
+  "mcpServers": {
+    "inftime": {
+      "command": "/usr/bin/python3",
+      "args": ["-m", "inftime.mcp_server"],
+      "cwd": "/Users/xueyiteng/WorkBuddy/Inftime智能时间助理/inftime",
+      "env": {
+        "INFTIME_HOME": "/Users/xueyiteng/.inftime"
+      }
+    }
+  }
+}
