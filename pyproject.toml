@@ -9,8 +9,7 @@ keywords = ["mcp", "calendar", "nlp", "chinese", "time-management", "local-first
 dependencies = []
 
 [project.urls]
-# TODO: 仓库建好后把 YOUR_NAME 换成真实用户名
-Homepage = "https://github.com/YOUR_NAME/inftime"
+Homepage = "https://github.com/YitengHsueh/inftime"
 
 [project.scripts]
 inftime = "inftime.cli:main"
