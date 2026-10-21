@@ -670,7 +670,7 @@ class TestClipboardCredentialGate(unittest.TestCase):
         for s in ("我的密码是 hunter2 记得改",
                   "这是 API_KEY，别外传",
                   "token: abcdefghijklmnop",
-                  "身份证 310110199801011234"):
+                  "身份证 000000000000000000"):
             with self.subTest(s):
                 self.assertTrue(self.looks(s))
 
